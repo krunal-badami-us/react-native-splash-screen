@@ -18,29 +18,36 @@ import java.lang.ref.WeakReference;
 public class SplashScreen {
     private static Dialog mSplashDialog;
     private static WeakReference<Activity> mActivity;
-
+    private static androidx.core.splashscreen.SplashScreen splashScreen;
     /**
      * 打开启动屏
      */
     public static void show(final Activity activity, final int themeResId, final boolean fullScreen) {
         if (activity == null) return;
         mActivity = new WeakReference<Activity>(activity);
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (!activity.isFinishing()) {
-                    mSplashDialog = new Dialog(activity, themeResId);
-                    mSplashDialog.setContentView(R.layout.launch_screen);
-                    mSplashDialog.setCancelable(false);
-                    if (fullScreen) {
-                        setActivityAndroidP(mSplashDialog);
-                    }
-                    if (!mSplashDialog.isShowing()) {
-                        mSplashDialog.show();
+        // Add these lines
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            splashScreen = androidx.core.splashscreen.SplashScreen.installSplashScreen(activity);
+            splashScreen.setKeepOnScreenCondition(() -> true);
+        } else {
+            // put these in else condition
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (!activity.isFinishing()) {
+                        mSplashDialog = new Dialog(activity, themeResId);
+                        mSplashDialog.setContentView(R.layout.launch_screen);
+                        mSplashDialog.setCancelable(false);
+                        if (fullScreen) {
+                            setActivityAndroidP(mSplashDialog);
+                        }
+                        if (!mSplashDialog.isShowing()) {
+                            mSplashDialog.show();
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -62,6 +69,7 @@ public class SplashScreen {
     /**
      * 关闭启动屏
      */
+
     public static void hide(Activity activity) {
         if (activity == null) {
             if (mActivity == null) {
@@ -73,6 +81,9 @@ public class SplashScreen {
         if (activity == null) return;
 
         final Activity _activity = activity;
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && splashScreen != null) {
+            splashScreen.setKeepOnScreenCondition(() -> false);
+        }
 
         _activity.runOnUiThread(new Runnable() {
             @Override
